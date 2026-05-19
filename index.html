@@ -1,0 +1,2035 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <!-- Google tag (gtag.js) -->
+        <script
+            async
+            src="https://www.googletagmanager.com/gtag/js?id=G-RBF6MR3T6R"
+        ></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() {
+                dataLayer.push(arguments);
+            }
+            gtag("js", new Date());
+
+            gtag("config", "G-RBF6MR3T6R");
+        </script>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>YouTube Search</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@300;400;500&family=Caveat:wght@400;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            :root {
+                --accent: #ff0000;
+                --bg: #0a0a0a;
+                --surface: #0d1a0d;
+                --text: #00ff41;
+                --text2: #007a20;
+                --border: #00ff41;
+                --overlay: rgba(0, 0, 0, 0.72);
+                --font-scale: 1;
+                --bg-blur: 0px;
+                --bg-scale: 1;
+            }
+
+            /* ── THEME DARK DEFAULTS ── */
+            body.retro {
+                --bg: #0a0a0a;
+                --surface: #0d1a0d;
+                --text: #00ff41;
+                --text2: #007a20;
+                --border: #00ff41;
+            }
+            body.minimal {
+                --bg: #0f0f0f;
+                --surface: #1a1a1a;
+                --text: #f5f5f5;
+                --text2: #666;
+                --border: #2a2a2a;
+            }
+            body.sketchy {
+                --bg: #1e1a10;
+                --surface: #2a2412;
+                --text: #f5e8c8;
+                --text2: #a89070;
+                --border: #6a5840;
+            }
+
+            /* ── LIGHT OVERRIDES ── */
+            body.retro.light {
+                --bg: #e8f5e8;
+                --surface: #d0ead0;
+                --text: #003d10;
+                --text2: #007a20;
+                --border: #00aa30;
+                --overlay: rgba(255, 255, 255, 0.78);
+            }
+            body.minimal.light {
+                --bg: #fafafa;
+                --surface: #ffffff;
+                --text: #0a0a0a;
+                --text2: #888;
+                --border: #e0e0e0;
+                --overlay: rgba(255, 255, 255, 0.78);
+            }
+            body.sketchy.light {
+                --bg: #fffef5;
+                --surface: #fffdf0;
+                --text: #2d2316;
+                --text2: #7a6a50;
+                --border: #c8b89a;
+                --overlay: rgba(255, 255, 255, 0.78);
+            }
+
+            html,
+            body {
+                height: 100%;
+            }
+            body {
+                font-family: "Press Start 2P", monospace;
+                background: var(--bg);
+                color: var(--text);
+                min-height: 100vh;
+                position: relative;
+                overflow-x: hidden;
+                transition:
+                    background 0.3s,
+                    color 0.3s;
+            }
+
+            /* ══ BG IMAGE ══ */
+            #bg-layer {
+                position: fixed;
+                inset: 0;
+                z-index: 0;
+                background-size: cover;
+                background-position: center;
+                filter: blur(var(--bg-blur));
+                transform: scale(var(--bg-scale));
+                transition:
+                    filter 0.25s,
+                    transform 0.25s;
+                display: none;
+            }
+            #bg-layer.on {
+                display: block;
+            }
+            #bg-overlay {
+                position: fixed;
+                inset: 0;
+                z-index: 1;
+                background: var(--overlay);
+                display: none;
+                transition: background 0.3s;
+            }
+            #bg-overlay.on {
+                display: block;
+            }
+
+            /* ══ SCANLINES ══ */
+            #scanlines {
+                position: fixed;
+                inset: 0;
+                z-index: 2;
+                pointer-events: none;
+                background: repeating-linear-gradient(
+                    0deg,
+                    rgba(0, 255, 65, 0.025) 0px,
+                    rgba(0, 255, 65, 0.025) 1px,
+                    transparent 1px,
+                    transparent 3px
+                );
+                opacity: 0;
+                transition: opacity 0.4s;
+            }
+            body.retro #scanlines {
+                opacity: 1;
+            }
+
+            /* ══ SVG FILTERS ══ */
+            svg.defs-only {
+                position: absolute;
+                width: 0;
+                height: 0;
+                overflow: hidden;
+            }
+
+            /* ══ TOP-BAR ══ */
+            #topbar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                z-index: 300;
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+                padding: 14px 18px;
+                pointer-events: none;
+            }
+            #theme-ctrl,
+            #right-ctrl {
+                pointer-events: all;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                flex-wrap: wrap;
+            }
+
+            /* shared small button */
+            .tb-btn {
+                cursor: pointer;
+                font-family: "Press Start 2P", monospace;
+                font-size: calc(8px * var(--font-scale));
+                padding: 7px 11px;
+                border: 2px solid var(--border);
+                background: var(--surface);
+                color: var(--text);
+                transition: all 0.25s;
+                white-space: nowrap;
+                line-height: 1.4;
+            }
+            .tb-btn:hover {
+                border-color: var(--accent);
+                color: var(--accent);
+            }
+            .tb-btn.active {
+                background: var(--accent);
+                color: #fff;
+                border-color: var(--accent);
+            }
+
+            body.retro .tb-btn {
+                box-shadow: 2px 2px 0 var(--text2);
+                border-radius: 0;
+            }
+            body.retro .tb-btn:active {
+                transform: translate(2px, 2px);
+                box-shadow: none;
+            }
+            body.minimal .tb-btn {
+                font-family: "Inter", sans-serif;
+                font-size: calc(11px * var(--font-scale));
+                font-weight: 500;
+                border: 0.5px solid var(--border);
+                border-radius: 3px;
+                padding: 6px 13px;
+            }
+            body.sketchy .tb-btn {
+                font-family: "Caveat", cursive;
+                font-size: calc(15px * var(--font-scale));
+                border: 2px solid var(--border);
+                border-radius: 20px;
+                filter: url(#wob-sm);
+                padding: 5px 14px;
+            }
+
+            /* ══ SETTINGS PANEL ══ */
+            #settings-panel {
+                position: fixed;
+                top: 54px;
+                right: 18px;
+                z-index: 400;
+                background: var(--surface);
+                border: 2px solid var(--border);
+                padding: 18px 16px;
+                width: 260px;
+                max-height: calc(100vh - 80px);
+                overflow-y: auto;
+                display: none;
+                flex-direction: column;
+                gap: 14px;
+                transition:
+                    background 0.3s,
+                    border-color 0.3s;
+            }
+            #settings-panel.open {
+                display: flex;
+            }
+            body.minimal #settings-panel {
+                border: 0.5px solid var(--border);
+                border-radius: 5px;
+            }
+            body.sketchy #settings-panel {
+                border-radius: 10px;
+                filter: url(#wob-sm);
+            }
+
+            .s-label {
+                font-family: "Press Start 2P", monospace;
+                font-size: calc(7px * var(--font-scale));
+                color: var(--text2);
+                letter-spacing: 0.5px;
+                margin-bottom: 5px;
+                display: block;
+            }
+            body.minimal .s-label {
+                font-family: "Inter", sans-serif;
+                font-size: calc(10px * var(--font-scale));
+                letter-spacing: 1.5px;
+                text-transform: uppercase;
+            }
+            body.sketchy .s-label {
+                font-family: "Caveat", cursive;
+                font-size: calc(14px * var(--font-scale));
+            }
+
+            .s-input {
+                width: 100%;
+                background: var(--bg);
+                color: var(--text);
+                border: 1.5px solid var(--border);
+                padding: 8px 10px;
+                font-family: "Press Start 2P", monospace;
+                font-size: calc(9px * var(--font-scale));
+                outline: none;
+                transition: border 0.2s;
+            }
+            .s-input:focus {
+                border-color: var(--accent);
+            }
+            body.minimal .s-input {
+                font-family: "Inter", sans-serif;
+                font-size: calc(13px * var(--font-scale));
+                border: 0.5px solid var(--border);
+                border-radius: 3px;
+            }
+            body.sketchy .s-input {
+                font-family: "Caveat", cursive;
+                font-size: calc(16px * var(--font-scale));
+                border: 2px solid var(--border);
+                border-radius: 6px;
+            }
+            #font-size-input {
+                width: 78px;
+                text-align: right;
+            }
+
+            .s-row {
+                display: flex;
+                flex-direction: column;
+            }
+            .s-row-h {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+            }
+            .s-inline-actions {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            #accent-pick,
+            #theme-color-pick {
+                width: 38px;
+                height: 38px;
+                border: 2px solid var(--border);
+                cursor: pointer;
+                padding: 2px;
+                background: none;
+                border-radius: 4px;
+            }
+            .s-file-btn {
+                cursor: pointer;
+                background: transparent;
+                color: var(--text);
+                border: 1.5px solid var(--border);
+                padding: 7px;
+                font-family: "Press Start 2P", monospace;
+                font-size: calc(8px * var(--font-scale));
+                text-align: center;
+                transition: all 0.2s;
+                margin-top: 4px;
+                display: block;
+                width: 100%;
+            }
+            .s-file-btn:hover {
+                border-color: var(--accent);
+                color: var(--accent);
+            }
+            body.minimal .s-file-btn {
+                font-family: "Inter", sans-serif;
+                font-size: calc(11px * var(--font-scale));
+                border: 0.5px solid var(--border);
+                border-radius: 3px;
+            }
+            body.sketchy .s-file-btn {
+                font-family: "Caveat", cursive;
+                font-size: calc(15px * var(--font-scale));
+                border: 2px solid var(--border);
+                border-radius: 6px;
+            }
+
+            .s-mini-btn {
+                cursor: pointer;
+                background: transparent;
+                color: var(--text);
+                border: 1.5px solid var(--border);
+                padding: 7px 10px;
+                font-family: "Press Start 2P", monospace;
+                font-size: calc(7px * var(--font-scale));
+                transition: all 0.2s;
+                white-space: nowrap;
+            }
+            .s-mini-btn:hover {
+                border-color: var(--accent);
+                color: var(--accent);
+            }
+            body.minimal .s-mini-btn {
+                font-family: "Inter", sans-serif;
+                font-size: calc(11px * var(--font-scale));
+                border: 0.5px solid var(--border);
+                border-radius: 3px;
+            }
+            body.sketchy .s-mini-btn {
+                font-family: "Caveat", cursive;
+                font-size: calc(15px * var(--font-scale));
+                border: 2px solid var(--border);
+                border-radius: 8px;
+            }
+
+            .s-value {
+                color: var(--text);
+                font-family: "Press Start 2P", monospace;
+                font-size: calc(8px * var(--font-scale));
+            }
+            body.minimal .s-value {
+                font-family: "Inter", sans-serif;
+                font-size: calc(11px * var(--font-scale));
+            }
+            body.sketchy .s-value {
+                font-family: "Caveat", cursive;
+                font-size: calc(15px * var(--font-scale));
+            }
+
+            .s-range {
+                width: 100%;
+                accent-color: var(--accent);
+            }
+
+            .s-toggle {
+                cursor: pointer;
+                border: 1.5px solid var(--border);
+                background: var(--bg);
+                color: var(--text);
+                padding: 8px 10px;
+                transition: all 0.2s;
+                font-family: "Press Start 2P", monospace;
+                font-size: calc(8px * var(--font-scale));
+            }
+            .s-toggle:hover,
+            .s-toggle.active {
+                border-color: var(--accent);
+                color: var(--accent);
+            }
+            body.minimal .s-toggle {
+                font-family: "Inter", sans-serif;
+                font-size: calc(11px * var(--font-scale));
+                border: 0.5px solid var(--border);
+                border-radius: 3px;
+            }
+            body.sketchy .s-toggle {
+                font-family: "Caveat", cursive;
+                font-size: calc(15px * var(--font-scale));
+                border: 2px solid var(--border);
+                border-radius: 8px;
+            }
+
+            .settings-divider {
+                border: none;
+                border-top: 1px solid var(--border);
+                opacity: 0.45;
+            }
+
+            .settings-section-title {
+                color: var(--text);
+                font-family: "Press Start 2P", monospace;
+                font-size: calc(8px * var(--font-scale));
+                letter-spacing: 0.8px;
+            }
+            body.minimal .settings-section-title {
+                font-family: "Inter", sans-serif;
+                font-size: calc(11px * var(--font-scale));
+                text-transform: uppercase;
+                letter-spacing: 1.6px;
+            }
+            body.sketchy .settings-section-title {
+                font-family: "Caveat", cursive;
+                font-size: calc(18px * var(--font-scale));
+            }
+
+            .follow-links {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .follow-link {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                color: var(--text);
+                text-decoration: none;
+                padding: 9px 10px;
+                border: 1.5px solid var(--border);
+                background: var(--surface);
+                transition: all 0.2s;
+                font-family: "Press Start 2P", monospace;
+                font-size: calc(8px * var(--font-scale));
+            }
+            .follow-link:hover {
+                color: var(--accent);
+                border-color: var(--accent);
+                transform: translateY(-1px);
+            }
+            body.retro .follow-link {
+                box-shadow: 2px 2px 0 var(--text2);
+            }
+            body.minimal .follow-link {
+                font-family: "Inter", sans-serif;
+                font-size: calc(11px * var(--font-scale));
+                border: 0.5px solid var(--border);
+                border-radius: 4px;
+            }
+            body.sketchy .follow-link {
+                font-family: "Caveat", cursive;
+                font-size: calc(16px * var(--font-scale));
+                border: 2px solid var(--border);
+                border-radius: 14px;
+                filter: url(#wob-sm);
+            }
+
+            .follow-icon {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: calc(18px * var(--font-scale));
+                height: calc(18px * var(--font-scale));
+                color: inherit;
+                flex-shrink: 0;
+            }
+            .follow-icon svg {
+                width: 100%;
+                height: 100%;
+                stroke: currentColor;
+                fill: none;
+                stroke-width: 1.8;
+                stroke-linecap: round;
+                stroke-linejoin: round;
+            }
+
+            .settings-note {
+                color: var(--text2);
+                line-height: 1.8;
+                font-family: "Press Start 2P", monospace;
+                font-size: calc(7px * var(--font-scale));
+            }
+            body.minimal .settings-note {
+                font-family: "Inter", sans-serif;
+                font-size: calc(11px * var(--font-scale));
+                line-height: 1.5;
+            }
+            body.sketchy .settings-note {
+                font-family: "Caveat", cursive;
+                font-size: calc(16px * var(--font-scale));
+                line-height: 1.35;
+            }
+
+            /* ══ MAIN STAGE ══ */
+            #stage {
+                position: relative;
+                z-index: 10;
+                height: 100vh;
+                overflow: hidden;
+            }
+
+            #hero {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: min(620px, calc(100vw - 40px));
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+            }
+
+            /* ══ GREETING ══ */
+            #greeting {
+                font-family: "Press Start 2P", monospace;
+                font-size: calc(9px * var(--font-scale));
+                color: var(--text2);
+                margin-bottom: 8px;
+                letter-spacing: 1px;
+                text-align: center;
+                min-height: 18px;
+                transition: all 0.3s;
+            }
+            body.minimal #greeting {
+                font-family: "Inter", sans-serif;
+                font-size: calc(14px * var(--font-scale));
+                font-weight: 300;
+            }
+            body.sketchy #greeting {
+                font-family: "Caveat", cursive;
+                font-size: calc(19px * var(--font-scale));
+            }
+
+            /* ══ LOGO ══ */
+            #logo {
+                font-family: "Press Start 2P", monospace;
+                font-size: calc(2.1rem * var(--font-scale));
+                color: var(--accent);
+                text-shadow:
+                    0 0 10px var(--accent),
+                    0 0 28px var(--accent),
+                    0 0 55px var(--accent);
+                letter-spacing: 3px;
+                margin-bottom: 2.4rem;
+                text-align: center;
+                transition: all 0.35s;
+                cursor: default;
+                image-rendering: pixelated;
+            }
+            body.minimal #logo {
+                font-family: "Inter", sans-serif;
+                font-weight: 300;
+                font-size: calc(3.4rem * var(--font-scale));
+                letter-spacing: -3px;
+                color: var(--text);
+                text-shadow: none;
+                border-bottom: 2px solid var(--accent);
+                padding-bottom: 4px;
+                display: inline-block;
+            }
+            body.sketchy #logo {
+                font-family: "Caveat", cursive;
+                font-weight: 700;
+                font-size: calc(4rem * var(--font-scale));
+                color: var(--accent);
+                text-shadow: none;
+                letter-spacing: 1px;
+                transform: rotate(-2deg);
+                display: inline-block;
+            }
+
+            /* ══ SEARCH ZONE ══ */
+            #search-zone {
+                width: 100%;
+                max-width: 620px;
+                position: relative;
+                flex-shrink: 0;
+            }
+            #search-row {
+                display: flex;
+                width: 100%;
+            }
+            #q {
+                flex: 1;
+                padding: 16px 20px;
+                font-family: "Press Start 2P", monospace;
+                font-size: calc(11px * var(--font-scale));
+                background: var(--surface);
+                color: var(--text);
+                border: 2px solid var(--border);
+                border-right: none;
+                outline: none;
+                transition: all 0.3s;
+            }
+            #q::placeholder {
+                color: var(--text2);
+            }
+            #q:focus {
+                border-color: var(--accent);
+            }
+            body.minimal #q {
+                font-family: "Inter", sans-serif;
+                font-size: calc(15px * var(--font-scale));
+                font-weight: 300;
+                border: 0.5px solid var(--border);
+                border-right: none;
+                border-radius: 3px 0 0 3px;
+                padding: 17px 22px;
+            }
+            body.sketchy #q {
+                font-family: "Caveat", cursive;
+                font-size: calc(20px * var(--font-scale));
+                border: 2.5px solid var(--border);
+                border-right: none;
+                border-radius: 8px 0 0 8px;
+                background: var(--bg);
+                filter: url(#wob-sm);
+            }
+            #go-btn {
+                padding: 16px 22px;
+                background: var(--accent);
+                color: #fff;
+                border: 2px solid var(--accent);
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.25s;
+            }
+            #go-btn:hover {
+                opacity: 0.82;
+                transform: scale(1.04);
+            }
+            #go-btn:active {
+                transform: scale(0.96);
+            }
+            #go-btn svg {
+                width: 18px;
+                height: 18px;
+                flex-shrink: 0;
+            }
+            body.retro #go-btn {
+                box-shadow: 3px 3px 0 #003d10;
+            }
+            body.retro #go-btn:active {
+                transform: translate(3px, 3px);
+                box-shadow: none;
+            }
+            body.minimal #go-btn {
+                border: 0.5px solid var(--accent);
+                border-radius: 0 3px 3px 0;
+            }
+            body.sketchy #go-btn {
+                border: 2.5px solid var(--accent);
+                border-radius: 0 8px 8px 0;
+                filter: url(#wob-sm);
+            }
+
+            /* ══ DROPDOWN ══ */
+            #dropdown {
+                position: absolute;
+                top: calc(100% + 3px);
+                left: 0;
+                right: 0;
+                background: var(--surface);
+                border: 2px solid var(--border);
+                z-index: 200;
+                display: none;
+                flex-direction: column;
+                max-height: 240px;
+                overflow-y: auto;
+            }
+            #dropdown.open {
+                display: flex;
+            }
+            body.minimal #dropdown {
+                border: 0.5px solid var(--border);
+                border-radius: 0 0 4px 4px;
+            }
+            body.sketchy #dropdown {
+                border: 2.5px solid var(--border);
+                border-radius: 8px;
+                filter: url(#wob-sm);
+            }
+
+            .dd-item {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 10px 16px;
+                cursor: pointer;
+                font-family: "Press Start 2P", monospace;
+                font-size: calc(9px * var(--font-scale));
+                color: var(--text);
+                border-bottom: 1px solid var(--border);
+                transition: background 0.15s;
+            }
+            .dd-item:last-child {
+                border-bottom: none;
+            }
+            .dd-item:hover {
+                background: var(--bg);
+                color: var(--accent);
+            }
+            .dd-clock {
+                color: var(--text2);
+                font-size: calc(12px * var(--font-scale));
+                flex-shrink: 0;
+            }
+            .dd-text {
+                flex: 1;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .dd-del {
+                background: none;
+                border: none;
+                cursor: pointer;
+                color: var(--text2);
+                font-size: calc(18px * var(--font-scale));
+                line-height: 1;
+                padding: 0 2px;
+                flex-shrink: 0;
+                transition: color 0.2s;
+            }
+            .dd-del:hover {
+                color: #e44;
+            }
+            body.minimal .dd-item {
+                font-family: "Inter", sans-serif;
+                font-size: calc(13px * var(--font-scale));
+                font-weight: 300;
+            }
+            body.sketchy .dd-item {
+                font-family: "Caveat", cursive;
+                font-size: calc(17px * var(--font-scale));
+            }
+
+            /* ══ HISTORY BUBBLES ══ */
+            #hist-section {
+                position: absolute;
+                top: calc(100% + 1.4rem);
+                left: 0;
+                width: 100%;
+                max-width: 100%;
+                max-height: clamp(140px, 24vh, 240px);
+                min-height: 0;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+                text-align: left;
+            }
+            #hist-section.hidden {
+                max-height: none;
+                min-height: auto;
+            }
+            #hist-head {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 12px;
+                flex-shrink: 0;
+            }
+            #hist-label {
+                font-family: "Press Start 2P", monospace;
+                font-size: calc(7px * var(--font-scale));
+                color: var(--text2);
+                letter-spacing: 1px;
+            }
+            body.minimal #hist-label {
+                font-family: "Inter", sans-serif;
+                font-size: calc(10px * var(--font-scale));
+                letter-spacing: 2px;
+                text-transform: uppercase;
+            }
+            body.sketchy #hist-label {
+                font-family: "Caveat", cursive;
+                font-size: calc(16px * var(--font-scale));
+            }
+
+            #hist-acts {
+                display: flex;
+                gap: 8px;
+            }
+            .hist-btn {
+                background: none;
+                border: none;
+                cursor: pointer;
+                font-family: "Press Start 2P", monospace;
+                font-size: calc(7px * var(--font-scale));
+                color: var(--text2);
+                padding: 3px 6px;
+                transition: color 0.2s;
+            }
+            .hist-btn:hover {
+                color: var(--accent);
+            }
+            body.minimal .hist-btn {
+                font-family: "Inter", sans-serif;
+                font-size: calc(11px * var(--font-scale));
+            }
+            body.sketchy .hist-btn {
+                font-family: "Caveat", cursive;
+                font-size: calc(15px * var(--font-scale));
+            }
+
+            #hist-list {
+                flex: 1;
+                min-height: 0;
+                overflow-y: auto;
+                padding-right: 6px;
+                width: 100%;
+            }
+            #bubbles {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: flex-start;
+                gap: 10px;
+                width: 100%;
+            }
+
+            .bub {
+                display: inline-flex;
+                align-items: flex-start;
+                gap: 10px;
+                padding: 8px 14px;
+                cursor: pointer;
+                font-family: "Press Start 2P", monospace;
+                font-size: calc(9px * var(--font-scale));
+                color: var(--text);
+                background: var(--surface);
+                border: 2px solid var(--border);
+                transition: all 0.2s;
+                width: auto;
+                max-width: 100%;
+                min-width: 0;
+            }
+            .bub:hover {
+                border-color: var(--accent);
+                color: var(--accent);
+                background: var(--bg);
+            }
+
+            body.retro .bub {
+                box-shadow: 2px 2px 0 var(--text2);
+                border-radius: 0;
+            }
+            body.retro .bub:active {
+                transform: translate(2px, 2px);
+                box-shadow: none;
+            }
+
+            body.minimal .bub {
+                font-family: "Inter", sans-serif;
+                font-size: calc(12px * var(--font-scale));
+                font-weight: 400;
+                border: 0.5px solid var(--border);
+                border-radius: 100px;
+                padding: 7px 16px;
+            }
+
+            body.sketchy .bub {
+                font-family: "Caveat", cursive;
+                font-size: calc(17px * var(--font-scale));
+                border: 2px solid var(--border);
+                border-radius: 20px;
+                filter: url(#wob-sm);
+                box-shadow: 2px 3px 0 var(--border);
+            }
+            body.sketchy .bub:nth-child(odd) {
+                transform: rotate(-0.6deg);
+            }
+            body.sketchy .bub:nth-child(even) {
+                transform: rotate(0.5deg);
+            }
+
+            .bub-text {
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .bub-text {
+                flex: 1;
+                min-width: 0;
+                white-space: normal;
+                overflow-wrap: anywhere;
+                line-height: 1.7;
+            }
+            .bub-del {
+                background: none;
+                border: none;
+                cursor: pointer;
+                color: var(--text2);
+                font-size: calc(15px * var(--font-scale));
+                line-height: 1;
+                padding: 0;
+                flex-shrink: 0;
+                transition: color 0.2s;
+                margin-top: 2px;
+            }
+            .bub-del:hover {
+                color: #e44;
+            }
+
+            #no-hist {
+                font-family: "Press Start 2P", monospace;
+                font-size: calc(8px * var(--font-scale));
+                color: var(--text2);
+                text-align: center;
+                padding: 1rem 0;
+                display: none;
+            }
+            body.minimal #no-hist {
+                font-family: "Inter", sans-serif;
+                font-size: calc(12px * var(--font-scale));
+            }
+            body.sketchy #no-hist {
+                font-family: "Caveat", cursive;
+                font-size: calc(16px * var(--font-scale));
+            }
+
+            /* history hidden toggle */
+            #hist-section.hidden #bubbles,
+            #hist-section.hidden #no-hist,
+            #hist-section.hidden #hist-list {
+                display: none !important;
+            }
+
+            /* ══ RESPONSIVE ══ */
+            @media (max-width: 900px) {
+                #hist-section {
+                    width: 100%;
+                }
+            }
+
+            @media (max-width: 520px) {
+                #hero {
+                    width: calc(100vw - 24px);
+                }
+                #logo {
+                    font-size: calc(1.4rem * var(--font-scale));
+                    letter-spacing: 2px;
+                }
+                body.minimal #logo {
+                    font-size: calc(2.2rem * var(--font-scale));
+                }
+                body.sketchy #logo {
+                    font-size: calc(2.8rem * var(--font-scale));
+                }
+                #q {
+                    font-size: calc(9px * var(--font-scale));
+                    padding: 13px 10px;
+                }
+                #go-btn {
+                    padding: 13px 14px;
+                }
+                .tb-btn {
+                    font-size: calc(7px * var(--font-scale));
+                    padding: 6px 8px;
+                }
+                #topbar {
+                    padding: 10px 10px;
+                }
+                #hist-section {
+                    top: calc(100% + 1rem);
+                    max-height: clamp(120px, 22vh, 200px);
+                }
+                #hist-head {
+                    gap: 10px;
+                    align-items: flex-start;
+                    flex-wrap: wrap;
+                }
+                #hist-acts {
+                    flex-wrap: wrap;
+                }
+            }
+        </style>
+    </head>
+    <body class="retro">
+        <!-- SVG filter defs -->
+        <svg class="defs-only" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <filter id="wobbly" x="-5%" y="-5%" width="110%" height="110%">
+                    <feTurbulence
+                        type="fractalNoise"
+                        baseFrequency="0.04"
+                        numOctaves="4"
+                        seed="2"
+                        result="n"
+                    />
+                    <feDisplacementMap
+                        in="SourceGraphic"
+                        in2="n"
+                        scale="3"
+                        xChannelSelector="R"
+                        yChannelSelector="G"
+                    />
+                </filter>
+                <filter id="wob-sm" x="-5%" y="-5%" width="110%" height="110%">
+                    <feTurbulence
+                        type="fractalNoise"
+                        baseFrequency="0.05"
+                        numOctaves="3"
+                        seed="5"
+                        result="n"
+                    />
+                    <feDisplacementMap
+                        in="SourceGraphic"
+                        in2="n"
+                        scale="2"
+                        xChannelSelector="R"
+                        yChannelSelector="G"
+                    />
+                </filter>
+            </defs>
+        </svg>
+
+        <div id="bg-layer"></div>
+        <div id="bg-overlay"></div>
+        <div id="scanlines"></div>
+
+        <!-- TOP BAR -->
+        <div id="topbar">
+            <div id="theme-ctrl">
+                <button class="tb-btn active" onclick="setTheme('retro')">
+                    Retro
+                </button>
+                <button class="tb-btn" onclick="setTheme('minimal')">
+                    Minimal
+                </button>
+                <button class="tb-btn" onclick="setTheme('sketchy')">
+                    Hand-drawn
+                </button>
+            </div>
+            <div id="right-ctrl">
+                <button class="tb-btn" id="mode-btn" onclick="toggleMode()">
+                    ☀ Light
+                </button>
+                <button
+                    class="tb-btn"
+                    id="settings-toggle"
+                    onclick="toggleSettings()"
+                >
+                    ⚙ Settings
+                </button>
+            </div>
+        </div>
+
+        <!-- SETTINGS PANEL -->
+        <div id="settings-panel">
+            <div class="s-row">
+                <span class="s-label">Your Name</span>
+                <input
+                    type="text"
+                    class="s-input"
+                    id="name-inp"
+                    placeholder="Enter your name…"
+                    oninput="saveName(this.value)"
+                />
+            </div>
+            <div class="s-row s-row-h">
+                <span class="s-label">Design Color</span>
+                <div class="s-inline-actions">
+                    <button
+                        class="s-mini-btn"
+                        type="button"
+                        onclick="resetThemeColor()"
+                    >
+                        Reset
+                    </button>
+                    <input
+                        type="color"
+                        id="theme-color-pick"
+                        value="#00ff41"
+                        oninput="setThemeColor(this.value)"
+                    />
+                </div>
+            </div>
+            <div class="s-row s-row-h">
+                <span class="s-label">Accent Color</span>
+                <input
+                    type="color"
+                    id="accent-pick"
+                    value="#ff0000"
+                    oninput="setAccent(this.value)"
+                />
+            </div>
+            <div class="s-row">
+                <div class="s-row s-row-h">
+                    <span class="s-label">Font Size</span>
+                    <div class="s-inline-actions">
+                        <input
+                            class="s-input"
+                            id="font-size-input"
+                            type="number"
+                            min="12"
+                            max="24"
+                            step="1"
+                            value="16"
+                            oninput="setFontSize(this.value)"
+                        />
+                        <span class="s-value">px</span>
+                    </div>
+                </div>
+            </div>
+            <div class="s-row">
+                <span class="s-label">Background Image</span>
+                <button
+                    class="s-file-btn"
+                    onclick="document.getElementById('file-inp').click()"
+                >
+                    ⬆ Upload Image
+                </button>
+                <button
+                    class="s-file-btn"
+                    id="clear-bg"
+                    style="display: none; margin-top: 6px"
+                    onclick="clearBg()"
+                >
+                    ✕ Clear Background
+                </button>
+                <input
+                    type="file"
+                    id="file-inp"
+                    accept="image/*"
+                    style="display: none"
+                    onchange="handleBg(event)"
+                />
+            </div>
+            <div class="s-row">
+                <div class="s-row s-row-h">
+                    <span class="s-label">Background Blur</span>
+                    <span class="s-value" id="bg-blur-val">0px</span>
+                </div>
+                <input
+                    class="s-range"
+                    id="bg-blur-range"
+                    type="range"
+                    min="0"
+                    max="24"
+                    step="1"
+                    value="0"
+                    oninput="setBgBlur(this.value)"
+                />
+            </div>
+            <div class="s-row">
+                <div class="s-row s-row-h">
+                    <span class="s-label">Front Overlay</span>
+                    <span class="s-value" id="overlay-val">72%</span>
+                </div>
+                <input
+                    class="s-range"
+                    id="overlay-range"
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value="72"
+                    oninput="setOverlayStrength(this.value)"
+                />
+            </div>
+            <hr class="settings-divider" />
+            <div class="s-row">
+                <span class="settings-section-title">Follow Us</span>
+            </div>
+            <div class="follow-links">
+                <a
+                    class="follow-link"
+                    href="https://www.instagram.com/omran.soliman97"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    <span class="follow-icon" aria-hidden="true">
+                        <svg
+                            viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <rect x="3" y="3" width="18" height="18" rx="5" />
+                            <circle cx="12" cy="12" r="4.5" />
+                            <circle cx="17.5" cy="6.5" r="1" />
+                        </svg>
+                    </span>
+                    <span>Instagram</span>
+                </a>
+                <a
+                    class="follow-link"
+                    href="https://github.com/omransoliman97/YouTubeSearchBar"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    <span class="follow-icon" aria-hidden="true">
+                        <svg
+                            viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <path d="M9 18c-4 1.2-4-2-6-2" />
+                            <path
+                                d="M15 21v-3.1a2.6 2.6 0 0 0-.7-2c2.3-.3 4.7-1.1 4.7-5A3.9 3.9 0 0 0 18 8.2a3.6 3.6 0 0 0-.1-2.6s-.9-.3-2.9 1.1a10 10 0 0 0-6 0C7 5.3 6.1 5.6 6.1 5.6A3.6 3.6 0 0 0 6 8.2a3.9 3.9 0 0 0-1 2.7c0 3.9 2.4 4.7 4.7 5a2.6 2.6 0 0 0-.7 2V21"
+                            />
+                        </svg>
+                    </span>
+                    <span>GitHub</span>
+                </a>
+                <a
+                    class="follow-link"
+                    href="https://www.linkedin.com/in/omransoliman"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    <span class="follow-icon" aria-hidden="true">
+                        <svg
+                            viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <path d="M7 10a5 5 0 0 1 10 0v4" />
+                            <path d="M7 8v8" />
+                            <path d="M17 8v8" />
+                            <path d="M7 14h10" />
+                        </svg>
+                    </span>
+                    <span>LinkedIn</span>
+                </a>
+                <a
+                    class="follow-link"
+                    href="https://x.com/omransoliman97"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    <span class="follow-icon" aria-hidden="true">
+                        <svg
+                            viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <path d="M4 4l16 16" />
+                            <path d="M20 4L4 20" />
+                        </svg>
+                    </span>
+                    <span>X / Twitter</span>
+                </a>
+                <a
+                    class="follow-link"
+                    href="https://omransoliman.vercel.app"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    <span class="follow-icon" aria-hidden="true">
+                        <svg
+                            viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <circle cx="12" cy="12" r="9" />
+                            <path d="M3 12h18" />
+                            <path d="M12 3a14 14 0 0 1 0 18" />
+                            <path d="M12 3a14 14 0 0 0 0 18" />
+                        </svg>
+                    </span>
+                    <span>Website</span>
+                </a>
+            </div>
+            <p class="settings-note">
+                Everything is saved on your device. We don&apos;t store any
+                data. Fully self-hosted.
+            </p>
+        </div>
+
+        <!-- MAIN STAGE -->
+        <div id="stage" onclick="onStageClick(event)">
+            <div id="hero">
+                <p id="greeting"></p>
+                <div id="logo">YouTube</div>
+
+                <div id="search-zone">
+                    <div id="search-row">
+                        <input
+                            type="text"
+                            id="q"
+                            placeholder="Search YouTube…"
+                            autocomplete="off"
+                            oninput="onInput()"
+                            onkeydown="onKey(event)"
+                            onfocus="onInput()"
+                        />
+                        <button id="go-btn" onclick="doSearch()">
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="#fff"
+                                stroke-width="2.5"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <circle cx="11" cy="11" r="6" />
+                                <line x1="16.5" y1="16.5" x2="21" y2="21" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="dropdown"></div>
+                </div>
+
+                <!-- HISTORY BUBBLES -->
+                <div id="hist-section">
+                    <div id="hist-head">
+                        <span id="hist-label">Recent Searches</span>
+                        <div id="hist-acts">
+                            <button
+                                class="hist-btn"
+                                id="toggle-hist"
+                                onclick="toggleHistory()"
+                            >
+                                Hide
+                            </button>
+                            <button class="hist-btn" onclick="clearAll()">
+                                Clear All
+                            </button>
+                        </div>
+                    </div>
+                    <div id="hist-list">
+                        <div id="bubbles"></div>
+                        <div id="no-hist"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- /#stage -->
+
+        <script>
+            /* ─── STATE ─── */
+            const DEFAULT_THEME_COLORS = {
+                retro: "#00ff41",
+                minimal: "#f5f5f5",
+                sketchy: "#f5e8c8",
+            };
+            const THEME_ORDER = ["retro", "minimal", "sketchy"];
+
+            let theme = "retro";
+            let dark = true;
+            let histVis = true;
+            let settOpen = false;
+            let accent = "#ff0000";
+            let uname = "";
+            let fontSizePx = 16;
+            let bgBlur = 0;
+            let overlayStrength = 72;
+            let hasBg = false;
+            let themeColors = { ...DEFAULT_THEME_COLORS };
+
+            const rootStyle = document.documentElement.style;
+            const body = document.body;
+            const logo = document.getElementById("logo");
+            const greet = document.getElementById("greeting");
+            const qEl = document.getElementById("q");
+            const dd = document.getElementById("dropdown");
+            const bubs = document.getElementById("bubbles");
+            const noHist = document.getElementById("no-hist");
+            const histSec = document.getElementById("hist-section");
+            const settPanel = document.getElementById("settings-panel");
+            const bgLayer = document.getElementById("bg-layer");
+            const bgOverlay = document.getElementById("bg-overlay");
+            const accentPick = document.getElementById("accent-pick");
+            const themeColorPick = document.getElementById("theme-color-pick");
+            const fontSizeInput = document.getElementById("font-size-input");
+            const bgBlurRange = document.getElementById("bg-blur-range");
+            const bgBlurVal = document.getElementById("bg-blur-val");
+            const overlayRange = document.getElementById("overlay-range");
+            const overlayVal = document.getElementById("overlay-val");
+            const clearBgBtn = document.getElementById("clear-bg");
+
+            /* ─── INIT ─── */
+            (function init() {
+                const p = getPrefs();
+
+                theme = THEME_ORDER.includes(p.theme) ? p.theme : "retro";
+                dark = p.dark !== undefined ? p.dark : true;
+                accent = normalizeHex(p.accent || "#ff0000");
+                uname = p.name || "";
+                histVis = p.histVis !== undefined ? p.histVis : true;
+                fontSizePx =
+                    p.fontSizePx !== undefined
+                        ? clampNum(Number(p.fontSizePx), 12, 24)
+                        : clampNum(
+                              Math.round((Number(p.fontScale ?? 1) || 1) * 16),
+                              12,
+                              24,
+                          );
+                bgBlur = clampNum(Number(p.bgBlur ?? 0), 0, 24);
+                overlayStrength =
+                    p.overlayStrength !== undefined
+                        ? clampNum(Number(p.overlayStrength), 0, 100)
+                        : p.overlayVisible === false
+                          ? 0
+                          : 72;
+                themeColors = {
+                    ...DEFAULT_THEME_COLORS,
+                    ...(p.themeColors || {}),
+                };
+
+                body.classList.add(theme);
+                body.classList.toggle("light", !dark);
+
+                accentPick.value = accent;
+                document.getElementById("name-inp").value = uname;
+
+                applyAccent();
+                applyThemePalette();
+                applyFontScale();
+                applyBgBlur();
+                refreshThemeColorControl();
+                refreshThemeBtns();
+                refreshModeBtn();
+                refreshOverlayControl();
+                refreshLogo();
+                refreshGreeting();
+                renderBubbles("");
+                applyHistVis();
+
+                const bgd = localStorage.getItem("yt_bg");
+                if (bgd) {
+                    applyBg(bgd);
+                } else {
+                    refreshBackgroundState();
+                }
+            })();
+
+            /* ─── HELPERS ─── */
+            function getPrefs() {
+                try {
+                    return JSON.parse(localStorage.getItem("yt_p") || "{}");
+                } catch {
+                    return {};
+                }
+            }
+
+            function clampNum(value, min, max) {
+                return Math.min(max, Math.max(min, value));
+            }
+
+            function normalizeHex(value) {
+                const raw = String(value || "").trim();
+                if (/^#[0-9a-f]{6}$/i.test(raw)) return raw.toLowerCase();
+                if (/^#[0-9a-f]{3}$/i.test(raw)) {
+                    return (
+                        "#" +
+                        raw
+                            .slice(1)
+                            .split("")
+                            .map((ch) => ch + ch)
+                            .join("")
+                            .toLowerCase()
+                    );
+                }
+                return "#000000";
+            }
+
+            function hexToRgb(hex) {
+                const safe = normalizeHex(hex);
+                return {
+                    r: parseInt(safe.slice(1, 3), 16),
+                    g: parseInt(safe.slice(3, 5), 16),
+                    b: parseInt(safe.slice(5, 7), 16),
+                };
+            }
+
+            function rgbToHsl(r, g, b) {
+                const rn = r / 255;
+                const gn = g / 255;
+                const bn = b / 255;
+                const max = Math.max(rn, gn, bn);
+                const min = Math.min(rn, gn, bn);
+                const delta = max - min;
+                let h = 0;
+                let s = 0;
+                const l = (max + min) / 2;
+
+                if (delta) {
+                    s = delta / (1 - Math.abs(2 * l - 1));
+                    switch (max) {
+                        case rn:
+                            h = 60 * (((gn - bn) / delta) % 6);
+                            break;
+                        case gn:
+                            h = 60 * ((bn - rn) / delta + 2);
+                            break;
+                        default:
+                            h = 60 * ((rn - gn) / delta + 4);
+                            break;
+                    }
+                }
+
+                return {
+                    h: (h + 360) % 360,
+                    s: s * 100,
+                    l: l * 100,
+                };
+            }
+
+            function hslToHex(h, s, l) {
+                const sat = clampNum(s, 0, 100) / 100;
+                const light = clampNum(l, 0, 100) / 100;
+                const c = (1 - Math.abs(2 * light - 1)) * sat;
+                const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+                const m = light - c / 2;
+                let r = 0;
+                let g = 0;
+                let b = 0;
+
+                if (h < 60) {
+                    r = c;
+                    g = x;
+                } else if (h < 120) {
+                    r = x;
+                    g = c;
+                } else if (h < 180) {
+                    g = c;
+                    b = x;
+                } else if (h < 240) {
+                    g = x;
+                    b = c;
+                } else if (h < 300) {
+                    r = x;
+                    b = c;
+                } else {
+                    r = c;
+                    b = x;
+                }
+
+                const toHex = (value) =>
+                    Math.round((value + m) * 255)
+                        .toString(16)
+                        .padStart(2, "0");
+                return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+            }
+
+            function buildPalette(themeName, baseHex, isDarkMode) {
+                const { r, g, b } = hexToRgb(baseHex);
+                const { h, s, l } = rgbToHsl(r, g, b);
+                const sat = clampNum(s, 8, 100);
+                const light = clampNum(l, 18, 88);
+
+                if (themeName === "retro") {
+                    return isDarkMode
+                        ? {
+                              bg: hslToHex(h, sat * 0.45, 4),
+                              surface: hslToHex(h, sat * 0.58, 9),
+                              text: hslToHex(h, sat, clampNum(light, 52, 68)),
+                              text2: hslToHex(h, sat * 0.75, 26),
+                              border: hslToHex(
+                                  h,
+                                  sat * 0.95,
+                                  clampNum(light, 45, 62),
+                              ),
+                              overlayRgb: "0,0,0",
+                          }
+                        : {
+                              bg: hslToHex(h, sat * 0.3, 93),
+                              surface: hslToHex(h, sat * 0.36, 86),
+                              text: hslToHex(h, sat * 0.85, 21),
+                              text2: hslToHex(h, sat * 0.7, 34),
+                              border: hslToHex(h, sat * 0.78, 44),
+                              overlayRgb: "255,255,255",
+                          };
+                }
+
+                if (themeName === "minimal") {
+                    return isDarkMode
+                        ? {
+                              bg: hslToHex(h, sat * 0.12, 6),
+                              surface: hslToHex(h, sat * 0.15, 11),
+                              text: hslToHex(
+                                  h,
+                                  sat * 0.6,
+                                  clampNum(light + 18, 78, 92),
+                              ),
+                              text2: hslToHex(h, sat * 0.18, 44),
+                              border: hslToHex(h, sat * 0.14, 16),
+                              overlayRgb: "0,0,0",
+                          }
+                        : {
+                              bg: hslToHex(h, sat * 0.06, 98),
+                              surface: hslToHex(h, sat * 0.08, 100),
+                              text: hslToHex(h, sat * 0.45, 12),
+                              text2: hslToHex(h, sat * 0.12, 50),
+                              border: hslToHex(h, sat * 0.1, 88),
+                              overlayRgb: "255,255,255",
+                          };
+                }
+
+                return isDarkMode
+                    ? {
+                          bg: hslToHex(h, sat * 0.28, 10),
+                          surface: hslToHex(h, sat * 0.3, 14),
+                          text: hslToHex(
+                              h,
+                              sat * 0.5,
+                              clampNum(light + 10, 78, 88),
+                          ),
+                          text2: hslToHex(h, sat * 0.28, 52),
+                          border: hslToHex(h, sat * 0.32, 34),
+                          overlayRgb: "0,0,0",
+                      }
+                    : {
+                          bg: hslToHex(h, sat * 0.14, 96),
+                          surface: hslToHex(h, sat * 0.16, 93),
+                          text: hslToHex(h, sat * 0.42, 18),
+                          text2: hslToHex(h, sat * 0.22, 42),
+                          border: hslToHex(h, sat * 0.24, 70),
+                          overlayRgb: "255,255,255",
+                      };
+            }
+
+            /* ─── THEME ─── */
+            function setTheme(t) {
+                body.classList.remove(...THEME_ORDER);
+                body.classList.add(t);
+                theme = t;
+                refreshThemeBtns();
+                refreshThemeColorControl();
+                applyThemePalette();
+                refreshLogo();
+                savePrefs();
+            }
+
+            function refreshThemeBtns() {
+                document
+                    .querySelectorAll("#theme-ctrl .tb-btn")
+                    .forEach((button, index) => {
+                        button.classList.toggle(
+                            "active",
+                            THEME_ORDER[index] === theme,
+                        );
+                    });
+            }
+
+            function refreshLogo() {
+                if (theme === "minimal") {
+                    logo.innerHTML =
+                        'You<span style="font-weight:700;color:var(--accent)">Tube</span>';
+                } else {
+                    logo.textContent = "YouTube";
+                }
+            }
+
+            function applyThemePalette() {
+                const palette = buildPalette(theme, themeColors[theme], dark);
+                body.style.setProperty("--bg", palette.bg);
+                body.style.setProperty("--surface", palette.surface);
+                body.style.setProperty("--text", palette.text);
+                body.style.setProperty("--text2", palette.text2);
+                body.style.setProperty("--border", palette.border);
+                body.style.setProperty(
+                    "--overlay",
+                    `rgba(${palette.overlayRgb}, ${overlayStrength / 100})`,
+                );
+            }
+
+            function refreshThemeColorControl() {
+                themeColorPick.value = normalizeHex(
+                    themeColors[theme] || DEFAULT_THEME_COLORS[theme],
+                );
+            }
+
+            function setThemeColor(value) {
+                themeColors[theme] = normalizeHex(value);
+                refreshThemeColorControl();
+                applyThemePalette();
+                savePrefs();
+            }
+
+            function resetThemeColor() {
+                themeColors[theme] = DEFAULT_THEME_COLORS[theme];
+                refreshThemeColorControl();
+                applyThemePalette();
+                savePrefs();
+            }
+
+            /* ─── MODE ─── */
+            function toggleMode() {
+                dark = !dark;
+                body.classList.toggle("light", !dark);
+                applyThemePalette();
+                refreshModeBtn();
+                savePrefs();
+            }
+
+            function refreshModeBtn() {
+                document.getElementById("mode-btn").textContent = dark
+                    ? "☀ Light"
+                    : "☾ Dark";
+            }
+
+            /* ─── ACCENT ─── */
+            function applyAccent() {
+                rootStyle.setProperty("--accent", accent);
+            }
+
+            function setAccent(value) {
+                accent = normalizeHex(value);
+                accentPick.value = accent;
+                applyAccent();
+                savePrefs();
+            }
+
+            /* ─── SETTINGS ─── */
+            function toggleSettings() {
+                settOpen = !settOpen;
+                settPanel.classList.toggle("open", settOpen);
+            }
+
+            function closeSettings() {
+                settOpen = false;
+                settPanel.classList.remove("open");
+            }
+
+            function onStageClick(e) {
+                if (
+                    !e.target.closest("#settings-panel") &&
+                    !e.target.closest("#settings-toggle")
+                )
+                    closeSettings();
+                if (!e.target.closest("#search-zone"))
+                    dd.classList.remove("open");
+            }
+
+            function applyFontScale() {
+                rootStyle.setProperty(
+                    "--font-scale",
+                    (fontSizePx / 16).toFixed(3),
+                );
+                fontSizeInput.value = String(Math.round(fontSizePx));
+            }
+
+            function setFontSize(value) {
+                fontSizePx = clampNum(Number(value) || 16, 12, 24);
+                applyFontScale();
+                savePrefs();
+            }
+
+            function applyBgBlur() {
+                rootStyle.setProperty("--bg-blur", `${bgBlur}px`);
+                rootStyle.setProperty(
+                    "--bg-scale",
+                    (1 + bgBlur / 140).toFixed(3),
+                );
+                bgBlurRange.value = String(bgBlur);
+                bgBlurVal.textContent = `${Math.round(bgBlur)}px`;
+            }
+
+            function setBgBlur(value) {
+                bgBlur = clampNum(Number(value), 0, 24);
+                applyBgBlur();
+                savePrefs();
+            }
+
+            function refreshOverlayControl() {
+                overlayRange.value = String(Math.round(overlayStrength));
+                overlayVal.textContent = `${Math.round(overlayStrength)}%`;
+            }
+
+            function setOverlayStrength(value) {
+                overlayStrength = clampNum(Number(value), 0, 100);
+                refreshOverlayControl();
+                applyThemePalette();
+                refreshBackgroundState();
+                savePrefs();
+            }
+
+            /* ─── NAME ─── */
+            function saveName(value) {
+                uname = value.trim();
+                refreshGreeting();
+                savePrefs();
+            }
+
+            function refreshGreeting() {
+                greet.textContent = uname ? "Hello, " + uname + " 👋" : "";
+            }
+
+            /* ─── BACKGROUND ─── */
+            function handleBg(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    localStorage.setItem("yt_bg", event.target.result);
+                    applyBg(event.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+
+            function refreshBackgroundState() {
+                bgLayer.classList.toggle("on", hasBg);
+                bgOverlay.classList.toggle("on", hasBg && overlayStrength > 0);
+                clearBgBtn.style.display = hasBg ? "" : "none";
+            }
+
+            function applyBg(url) {
+                bgLayer.style.backgroundImage = `url(${url})`;
+                hasBg = true;
+                refreshBackgroundState();
+            }
+
+            function clearBg() {
+                localStorage.removeItem("yt_bg");
+                bgLayer.style.backgroundImage = "";
+                hasBg = false;
+                refreshBackgroundState();
+                document.getElementById("file-inp").value = "";
+            }
+
+            /* ─── HISTORY ─── */
+            function getH() {
+                try {
+                    return JSON.parse(localStorage.getItem("yt_h") || "[]");
+                } catch {
+                    return [];
+                }
+            }
+            function setH(h) {
+                localStorage.setItem("yt_h", JSON.stringify(h));
+            }
+            function addH(q) {
+                const h = getH().filter((x) => x !== q);
+                h.unshift(q);
+                setH(h.slice(0, 40));
+            }
+
+            function renderBubbles(filter) {
+                const h = getH();
+                const f = filter.trim().toLowerCase();
+                const list = f
+                    ? h.filter((x) => x.toLowerCase().includes(f))
+                    : h;
+
+                bubs.innerHTML = "";
+                if (!list.length) {
+                    noHist.textContent = f
+                        ? "No matches in history"
+                        : "No search history yet";
+                    noHist.style.display = "block";
+                    return;
+                }
+                noHist.style.display = "none";
+
+                list.forEach((item) => {
+                    const b = document.createElement("div");
+                    b.className = "bub";
+
+                    const txt = document.createElement("span");
+                    txt.className = "bub-text";
+                    txt.textContent = item;
+                    txt.onclick = () => goSearch(item);
+
+                    const x = document.createElement("button");
+                    x.className = "bub-del";
+                    x.textContent = "×";
+                    x.onclick = (ev) => {
+                        ev.stopPropagation();
+                        setH(getH().filter((v) => v !== item));
+                        renderBubbles(qEl.value);
+                    };
+
+                    b.onclick = () => goSearch(item);
+                    b.appendChild(txt);
+                    b.appendChild(x);
+                    bubs.appendChild(b);
+                });
+            }
+
+            function clearAll() {
+                setH([]);
+                renderBubbles("");
+            }
+
+            function toggleHistory() {
+                histVis = !histVis;
+                applyHistVis();
+                savePrefs();
+            }
+            function applyHistVis() {
+                histSec.classList.toggle("hidden", !histVis);
+                document.getElementById("toggle-hist").textContent = histVis
+                    ? "Hide"
+                    : "Show";
+            }
+
+            /* ─── DROPDOWN ─── */
+            function onInput() {
+                const q = qEl.value;
+                renderDropdown(q);
+                renderBubbles(q);
+            }
+
+            function renderDropdown(q) {
+                if (!q.trim()) {
+                    dd.classList.remove("open");
+                    return;
+                }
+                const h = getH();
+                const matches = h.filter((x) =>
+                    x.toLowerCase().includes(q.toLowerCase()),
+                );
+                if (!matches.length) {
+                    dd.classList.remove("open");
+                    return;
+                }
+
+                dd.innerHTML = "";
+                matches.slice(0, 8).forEach((item) => {
+                    const row = document.createElement("div");
+                    row.className = "dd-item";
+
+                    const clk = document.createElement("span");
+                    clk.className = "dd-clock";
+                    clk.textContent = "🕐";
+
+                    const lbl = document.createElement("span");
+                    lbl.className = "dd-text";
+                    lbl.textContent = item;
+
+                    const x = document.createElement("button");
+                    x.className = "dd-del";
+                    x.textContent = "×";
+                    x.onclick = (ev) => {
+                        ev.stopPropagation();
+                        setH(getH().filter((v) => v !== item));
+                        renderDropdown(qEl.value);
+                        renderBubbles(qEl.value);
+                    };
+
+                    row.onclick = () => goSearch(item);
+                    row.appendChild(clk);
+                    row.appendChild(lbl);
+                    row.appendChild(x);
+                    dd.appendChild(row);
+                });
+                dd.classList.add("open");
+            }
+
+            /* ─── SEARCH ─── */
+            function onKey(e) {
+                if (e.key === "Enter") doSearch();
+            }
+
+            function doSearch() {
+                const q = qEl.value.trim();
+                if (!q) return;
+                goSearch(q);
+            }
+
+            function goSearch(q) {
+                addH(q);
+                renderBubbles(qEl.value);
+                dd.classList.remove("open");
+                window.location.href =
+                    "https://www.youtube.com/results?search_query=" +
+                    encodeURIComponent(q);
+            }
+
+            /* ─── PERSIST ─── */
+            function savePrefs() {
+                localStorage.setItem(
+                    "yt_p",
+                    JSON.stringify({
+                        theme,
+                        dark,
+                        accent,
+                        name: uname,
+                        histVis,
+                        fontSizePx,
+                        bgBlur,
+                        overlayStrength,
+                        themeColors,
+                    }),
+                );
+            }
+        </script>
+    </body>
+</html>
